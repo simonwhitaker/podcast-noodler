@@ -19,7 +19,6 @@ def episodes() -> None:
 async def _download_file(
     session: aiohttp.ClientSession, url: str, local_path: str
 ) -> None:
-    print(f"Downloading {url} to {local_path}")
     async with session.get(url) as resp:
         if resp.status == 200:
             with open(local_path, "wb") as f:
