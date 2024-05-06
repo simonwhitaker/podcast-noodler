@@ -72,7 +72,6 @@ def download_audio() -> None:
 
     async def _f():
         session = aiohttp.ClientSession(headers={"Referer": "https://flex.acast.com/"})
-        print(session.headers)
         await asyncio.gather(
             *[_download_file(session, url, path) for (url, path) in downloads]
         )
