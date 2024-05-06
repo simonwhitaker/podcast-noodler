@@ -6,9 +6,17 @@ import re
 import aiohttp
 import feedparser
 import pandas as pd
-from dagster import MaterializeResult, asset
+from dagster import MaterializeResult, MetadataValue, asset
+
+# Note: before using nltk functions, download the local data:
+#
+#   poetry run python scripts/download-nltk.py
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
 
 from podcast_noodler.utils import download_file
+
+lemmatizer = WordNetLemmatizer()
 
 
 @asset
@@ -77,49 +85,38 @@ def download_audio() -> None:
 
 
 @asset(deps=[episodes])
-def most_frequent_words() -> None:
-    stopwords = [
-        "a",
-        "an",
-        "and",
-        "are",
-        "as",
-        "at",
-        "but",
-        "for",
-        "from",
-        "has",
-        "his",
-        "in",
-        "is",
-        "it",
-        "of",
-        "on",
-        "reports",
-        "the",
-        "their",
-        "this",
-        "to",
-        "what",
-        "with",
-    ]
-
+def most_frequent_summary_words() -> MaterializeResult:
+    """
+    Determines the most commonly-occurring words in the summaries of all the
+    episodes in the feed, excluding stopwords.
+    """
     episodes = pd.read_json("data/episodes.json")
     word_counts = {}
+
     for raw_summary in episodes["summary"]:
         summary = raw_summary.lower()
         summary = re.sub(r"help support our.+$", "", summary)
-        print(summary)
-        for word in summary.split():
-            cleaned_word = word.strip(".,-!?:;()[]'\"-")
-            if cleaned_word not in stopwords and len(cleaned_word) > 0:
-                word_counts[cleaned_word] = word_counts.get(cleaned_word, 0) + 1
+        summary = re.sub(r"[^a-zA-Z]", " ", summary)
+        words = summary.split()
+        words = [word for word in words if word not in stopwords.words("english")]
+        words = [lemmatizer.lemmatize(word) for word in words]
+
+        for word in words:
+            word_counts[word] = word_counts.get(word, 0) + 1
 
     # Get the top 25 most frequent words
-    top_words = {
-        pair[0]: pair[1]
-        for pair in sorted(word_counts.items(), key=lambda x: x[1], reverse=True)[:25]
-    }
+    top_words = [
+        {"word": word, "count": count}
+        for (word, count) in sorted(
+            word_counts.items(), key=lambda x: x[1], reverse=True
+        )[:25]
+    ]
+    df = pd.DataFrame(top_words)
+    df.to_csv("data/most_frequent_summary_words.csv")
 
-    with open("data/most_frequent_words.json", "w") as f:
-        json.dump(top_words, f)
+    return MaterializeResult(
+        metadata={
+            "top_summary_words": MetadataValue.md(df.to_markdown()),
+        }
+    )
+

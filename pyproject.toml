@@ -12,6 +12,7 @@ dagster-webserver = "^1.7.3"
 feedparser = "^6.0.11"
 aiohttp = "^3.9.5"
 pandas = "^2.2.2"
+nltk = "^3.8.1"
 
 
 [tool.poetry.group.dev.dependencies]
