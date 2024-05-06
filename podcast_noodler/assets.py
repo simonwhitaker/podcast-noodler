@@ -1,9 +1,11 @@
 import asyncio
 import json
 import os
+import re
 
 import aiohttp
 import feedparser
+import pandas as pd
 from dagster import asset
 
 
@@ -84,3 +86,52 @@ def download_audio() -> None:
         await session.close()
 
     asyncio.run(_f())
+
+
+@asset(deps=[episodes])
+def most_frequent_words() -> None:
+    stopwords = [
+        "a",
+        "an",
+        "and",
+        "are",
+        "as",
+        "at",
+        "but",
+        "for",
+        "from",
+        "has",
+        "his",
+        "in",
+        "is",
+        "it",
+        "of",
+        "on",
+        "reports",
+        "the",
+        "their",
+        "this",
+        "to",
+        "what",
+        "with",
+    ]
+
+    episodes = pd.read_json("data/episodes.json")
+    word_counts = {}
+    for raw_summary in episodes["summary"]:
+        summary = raw_summary.lower()
+        summary = re.sub(r"help support our.+$", "", summary)
+        print(summary)
+        for word in summary.split():
+            cleaned_word = word.strip(".,-!?:;()[]'\"-")
+            if cleaned_word not in stopwords and len(cleaned_word) > 0:
+                word_counts[cleaned_word] = word_counts.get(cleaned_word, 0) + 1
+
+    # Get the top 25 most frequent words
+    top_words = {
+        pair[0]: pair[1]
+        for pair in sorted(word_counts.items(), key=lambda x: x[1], reverse=True)[:25]
+    }
+
+    with open("data/most_frequent_words.json", "w") as f:
+        json.dump(top_words, f)
