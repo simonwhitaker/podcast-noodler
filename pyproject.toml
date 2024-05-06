@@ -13,6 +13,9 @@ feedparser = "^6.0.11"
 aiohttp = "^3.9.5"
 
 
+[tool.poetry.group.dev.dependencies]
+bpython = "^0.24"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
