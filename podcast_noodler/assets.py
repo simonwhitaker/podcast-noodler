@@ -43,6 +43,13 @@ async def _download_file(
 
 @asset(deps=[episodes])
 def download_audio() -> None:
+    """
+    Download all audio files for all available podcast episodes.
+
+    Note: this can time out. We might want to define a job and set a longer
+    timeout, per
+    https://docs.dagster.io/deployment/run-monitoring#general-run-timeouts
+    """
     os.makedirs("data/downloads", exist_ok=True)
     downloads = []
     with open("data/episodes.json", "r") as f:
