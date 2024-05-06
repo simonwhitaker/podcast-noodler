@@ -6,16 +6,27 @@ import re
 import aiohttp
 import feedparser
 import pandas as pd
-from dagster import asset
+from dagster import MaterializeResult, asset
 
 
 @asset
-def episodes() -> None:
+def episodes() -> MaterializeResult:
+    """
+    Get the RSS feed for the podcase and store info on available episodes
+    """
     feed_url = "https://www.theguardian.com/news/series/todayinfocus/podcast.xml"
-    episodes = feedparser.parse(feed_url)
+    feed = feedparser.parse(feed_url)
+    episodes = feed["entries"]
     os.makedirs("data", exist_ok=True)
     with open("data/episodes.json", "w") as f:
-        json.dump(episodes["entries"], f, indent=4)
+        json.dump(episodes, f, indent=4)
+
+    return MaterializeResult(
+        metadata={
+            "num_episodes": len(episodes),
+            "latest_episode": episodes[0]["title"],
+        }
+    )
 
 
 async def _download_file(
