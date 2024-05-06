@@ -67,11 +67,17 @@ def download_audio() -> None:
                 # Downloading from flex.acast.com results in a 403 error, but
                 # downloading from audio.guim.co.uk does not. So let's do that.
                 mp3_url = mp3_links[0]["href"].replace("flex.acast.com/", "")
+
                 output = f"data/downloads/{episode_id}.mp3"
                 downloads.append((mp3_url, output))
 
     async def _f():
-        session = aiohttp.ClientSession(headers={"Referer": "https://flex.acast.com/"})
+        # Limit ourselves to 10 simultaneous connections
+        conn = aiohttp.TCPConnector(limit=10)
+        session = aiohttp.ClientSession(
+            connector=conn,
+            headers={"Referer": "https://flex.acast.com/"},
+        )
         await asyncio.gather(
             *[_download_file(session, url, path) for (url, path) in downloads]
         )
