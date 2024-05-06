@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "podcast-noodler"
+version = "0.1.0"
+description = ""
+authors = ["Simon Whitaker <sw@netcetera.org>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "~3.11.0"
+dagster = "^1.7.3"
+dagster-webserver = "^1.7.3"
+feedparser = "^6.0.11"
+aiohttp = "^3.9.5"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.dagster]
+module_name = "podcast_noodler"
