@@ -60,6 +60,12 @@ def download_audio() -> None:
                 link for link in episode["links"] if link["type"] == "audio/mpeg"
             ]
             if len(mp3_links) > 0:
+                # Links look like this:
+                #
+                # https://flex.acast.com/audio.guim.co.uk/...
+                #
+                # Downloading from flex.acast.com results in a 403 error, but
+                # downloading from audio.guim.co.uk does not. So let's do that.
                 mp3_url = mp3_links[0]["href"].replace("flex.acast.com/", "")
                 output = f"data/downloads/{episode_id}.mp3"
                 downloads.append((mp3_url, output))
