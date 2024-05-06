@@ -120,3 +120,28 @@ def most_frequent_summary_words() -> MaterializeResult:
         }
     )
 
+
+@asset(deps=[episodes])
+def most_frequent_tags() -> MaterializeResult:
+    tag_counts = {}
+    with open("data/episodes.json") as f:
+        episodes = json.load(f)
+        for episode in episodes:
+            tags = [t.get("term") for t in episode["tags"]]
+            for tag in tags:
+                tag_counts[tag] = tag_counts.get(tag, 0) + 1
+
+    top_tags = [
+        {"term": term, "count": count}
+        for (term, count) in sorted(
+            tag_counts.items(), key=lambda x: x[1], reverse=True
+        )[:25]
+    ]
+    df = pd.DataFrame(top_tags)
+    df.to_csv("data/most_frequent_tags.csv")
+
+    return MaterializeResult(
+        metadata={
+            "top_tags": MetadataValue.md(df.to_markdown()),
+        }
+    )
