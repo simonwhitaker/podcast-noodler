@@ -1,4 +1,5 @@
 import os
+import re
 
 import aiohttp
 
@@ -26,3 +27,7 @@ async def download_file(
                     f.write(chunk)
         else:
             print(f"[{resp.status}] {url}")
+
+
+def sluggify(s: str) -> str:
+    return re.sub(r"[^0-9a-z ]", "", s.lower()).replace(" ", "_")
