@@ -16,8 +16,8 @@ from nltk.stem import WordNetLemmatizer
 
 from podcast_noodler.utils import download_file
 
-from .partitions import monthly_partition
-from .utils import sluggify
+from ..partitions import monthly_partition
+from ..utils import sluggify
 
 lemmatizer = WordNetLemmatizer()
 
