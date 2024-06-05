@@ -6,7 +6,7 @@ import re
 import aiohttp
 import feedparser
 import pandas as pd
-from dagster import MaterializeResult, MetadataValue, asset
+from dagster import AssetExecutionContext, MaterializeResult, MetadataValue, asset
 
 # Note: before using nltk functions, download the local data:
 #
@@ -15,6 +15,9 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 
 from podcast_noodler.utils import download_file
+
+from .partitions import monthly_partition
+from .utils import sluggify
 
 lemmatizer = WordNetLemmatizer()
 
@@ -39,21 +42,26 @@ def episodes() -> MaterializeResult:
     )
 
 
-@asset(deps=[episodes])
-def audio_files() -> None:
+@asset(partitions_def=monthly_partition, deps=[episodes])
+def audio_files(context: AssetExecutionContext) -> None:
     """
-    Download all audio files for all available podcast episodes.
+    The audio files for available podcast episodes.
+    """
 
-    Note: this can time out. We might want to define a job and set a longer
-    timeout, per
-    https://docs.dagster.io/deployment/run-monitoring#general-run-timeouts
-    """
-    os.makedirs("data/downloads", exist_ok=True)
+    partition_key = context.partition_key  # YYYY-MM-DD
+    year_month = partition_key[:-3]  # YYYY-MM
+    (partition_year, partition_month, _) = [int(x) for x in partition_key.split("-")]
+
+    partition_dir = f"data/downloads/{year_month}"
+    os.makedirs(partition_dir, exist_ok=True)
     downloads = []
     with open("data/episodes.json", "r") as f:
         episodes = json.load(f)
         for episode in episodes:
-            episode_id = episode["id"]
+            episode_year, episode_month, episode_day, *_ = episode["published_parsed"]
+            if episode_year != partition_year or episode_month != partition_month:
+                continue
+
             mp3_links = [
                 link for link in episode["links"] if link["type"] == "audio/mpeg"
             ]
@@ -66,7 +74,9 @@ def audio_files() -> None:
                 # downloading from audio.guim.co.uk does not. So let's do that.
                 mp3_url = mp3_links[0]["href"].replace("flex.acast.com/", "")
 
-                output = f"data/downloads/{episode_id}.mp3"
+                episode_filename = f"{episode_year}-{episode_month:02d}-{episode_day:02d}-{sluggify(episode['title'])}.mp3"
+
+                output = f"{partition_dir}/{episode_filename}"
                 downloads.append((mp3_url, output))
 
     async def _f():
