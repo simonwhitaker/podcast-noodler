@@ -40,7 +40,7 @@ def episodes() -> MaterializeResult:
 
 
 @asset(deps=[episodes])
-def download_audio() -> None:
+def audio_files() -> None:
     """
     Download all audio files for all available podcast episodes.
 
