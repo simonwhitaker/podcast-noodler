@@ -23,7 +23,7 @@ lemmatizer = WordNetLemmatizer()
 
 
 @asset
-def episodes() -> MaterializeResult:
+def episode_metadata() -> MaterializeResult:
     """
     Get the RSS feed for the podcase and store info on available episodes
     """
@@ -42,7 +42,7 @@ def episodes() -> MaterializeResult:
     )
 
 
-@asset(partitions_def=monthly_partition, deps=[episodes])
+@asset(partitions_def=monthly_partition, deps=[episode_metadata])
 def audio_files(context: AssetExecutionContext) -> None:
     """
     The audio files for available podcast episodes.
@@ -94,7 +94,7 @@ def audio_files(context: AssetExecutionContext) -> None:
     asyncio.run(_f())
 
 
-@asset(deps=[episodes])
+@asset(deps=[episode_metadata])
 def most_frequent_summary_words() -> MaterializeResult:
     """
     Determines the most commonly-occurring words in the summaries of all the
@@ -131,7 +131,7 @@ def most_frequent_summary_words() -> MaterializeResult:
     )
 
 
-@asset(deps=[episodes])
+@asset(deps=[episode_metadata])
 def most_frequent_tags() -> MaterializeResult:
     tag_counts = {}
     with open("data/episodes.json") as f:
