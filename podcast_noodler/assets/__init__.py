@@ -6,8 +6,8 @@ import re
 import aiohttp
 import feedparser
 import pandas as pd
-from dagster import AssetExecutionContext, MaterializeResult, MetadataValue, asset
-
+from dagster import (AssetExecutionContext, MaterializeResult, MetadataValue,
+                     asset)
 # Note: before using nltk functions, download the local data:
 #
 #   poetry run python scripts/download-nltk.py
@@ -18,6 +18,8 @@ from podcast_noodler.utils import download_file
 
 from ..partitions import monthly_partition
 from ..utils import sluggify
+from .constants import (AUDIO_FILE_PARTITION_FILE_PATH_TEMPLATE,
+                        EPISODES_METADATA_FILE_PATH)
 
 lemmatizer = WordNetLemmatizer()
 
@@ -31,7 +33,7 @@ def episode_metadata() -> MaterializeResult:
     feed = feedparser.parse(feed_url)
     episodes = feed["entries"]
     os.makedirs("data", exist_ok=True)
-    with open("data/episodes.json", "w") as f:
+    with open(EPISODES_METADATA_FILE_PATH, "w") as f:
         json.dump(episodes, f, indent=4)
 
     return MaterializeResult(
@@ -52,10 +54,10 @@ def audio_files(context: AssetExecutionContext) -> None:
     year_month = partition_key[:-3]  # YYYY-MM
     (partition_year, partition_month, _) = [int(x) for x in partition_key.split("-")]
 
-    partition_dir = f"data/downloads/{year_month}"
+    partition_dir = AUDIO_FILE_PARTITION_FILE_PATH_TEMPLATE.format(year_month)
     os.makedirs(partition_dir, exist_ok=True)
     downloads = []
-    with open("data/episodes.json", "r") as f:
+    with open(EPISODES_METADATA_FILE_PATH, "r") as f:
         episodes = json.load(f)
         for episode in episodes:
             episode_year, episode_month, episode_day, *_ = episode["published_parsed"]
@@ -100,7 +102,7 @@ def most_frequent_summary_words() -> MaterializeResult:
     Determines the most commonly-occurring words in the summaries of all the
     episodes in the feed, excluding stopwords.
     """
-    episodes = pd.read_json("data/episodes.json")
+    episodes = pd.read_json(EPISODES_METADATA_FILE_PATH)
     word_counts = {}
 
     for raw_summary in episodes["summary"]:
@@ -134,7 +136,7 @@ def most_frequent_summary_words() -> MaterializeResult:
 @asset(deps=[episode_metadata])
 def most_frequent_tags() -> MaterializeResult:
     tag_counts = {}
-    with open("data/episodes.json") as f:
+    with open(EPISODES_METADATA_FILE_PATH) as f:
         episodes = json.load(f)
         for episode in episodes:
             tags = [t.get("term") for t in episode["tags"]]

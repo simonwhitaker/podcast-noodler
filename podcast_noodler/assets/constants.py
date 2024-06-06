@@ -1,0 +1,2 @@
+EPISODES_METADATA_FILE_PATH="data/episodes.json"
+AUDIO_FILE_PARTITION_FILE_PATH_TEMPLATE="data/downloads/{}"
