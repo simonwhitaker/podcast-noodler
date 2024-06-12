@@ -2,12 +2,15 @@ import asyncio
 import json
 import os
 import re
+from datetime import datetime, timezone
+from pathlib import Path
 
 import aiohttp
 import feedparser
 import pandas as pd
-from dagster import (AssetExecutionContext, MaterializeResult, MetadataValue,
-                     asset)
+import whisper
+from dagster import AssetExecutionContext, MaterializeResult, MetadataValue, asset
+
 # Note: before using nltk functions, download the local data:
 #
 #   poetry run python scripts/download-nltk.py
@@ -16,10 +19,13 @@ from nltk.stem import WordNetLemmatizer
 
 from podcast_noodler.utils import download_file
 
-from ..partitions import monthly_partition
+from ..partitions import weekly_partition
 from ..utils import sluggify
-from .constants import (AUDIO_FILE_PARTITION_FILE_PATH_TEMPLATE,
-                        EPISODES_METADATA_FILE_PATH)
+from .constants import (
+    AUDIO_FILE_PARTITION_FILE_PATH_TEMPLATE,
+    EPISODES_METADATA_FILE_PATH,
+    TRANSCRIPT_PARTITION_FILE_PATH_TEMPLATE,
+)
 
 lemmatizer = WordNetLemmatizer()
 
@@ -44,24 +50,29 @@ def episode_metadata() -> MaterializeResult:
     )
 
 
-@asset(partitions_def=monthly_partition, deps=[episode_metadata])
+@asset(partitions_def=weekly_partition, deps=[episode_metadata])
 def audio_files(context: AssetExecutionContext) -> None:
     """
     The audio files for available podcast episodes.
     """
 
     partition_key = context.partition_key  # YYYY-MM-DD
-    year_month = partition_key[:-3]  # YYYY-MM
-    (partition_year, partition_month, _) = [int(x) for x in partition_key.split("-")]
-
-    partition_dir = AUDIO_FILE_PARTITION_FILE_PATH_TEMPLATE.format(year_month)
+    partition_time_window = context.partition_time_window
+    partition_dir = AUDIO_FILE_PARTITION_FILE_PATH_TEMPLATE.format(partition_key)
     os.makedirs(partition_dir, exist_ok=True)
+
     downloads = []
     with open(EPISODES_METADATA_FILE_PATH, "r") as f:
         episodes = json.load(f)
         for episode in episodes:
-            episode_year, episode_month, episode_day, *_ = episode["published_parsed"]
-            if episode_year != partition_year or episode_month != partition_month:
+            date_elements = episode["published_parsed"][
+                0:6
+            ]  # [year, month, day, hour, min, sec]
+            published_timestamp = datetime(*date_elements, tzinfo=timezone.utc)
+            if (
+                published_timestamp > partition_time_window.end
+                or published_timestamp < partition_time_window.start
+            ):
                 continue
 
             mp3_links = [
@@ -76,7 +87,7 @@ def audio_files(context: AssetExecutionContext) -> None:
                 # downloading from audio.guim.co.uk does not. So let's do that.
                 mp3_url = mp3_links[0]["href"].replace("flex.acast.com/", "")
 
-                episode_filename = f"{episode_year}-{episode_month:02d}-{episode_day:02d}-{sluggify(episode['title'])}.mp3"
+                episode_filename = f"{date_elements[0]}-{date_elements[1]:02d}-{date_elements[2]:02d}-{sluggify(episode['title'])}.mp3"
 
                 output = f"{partition_dir}/{episode_filename}"
                 downloads.append((mp3_url, output))
@@ -94,6 +105,27 @@ def audio_files(context: AssetExecutionContext) -> None:
         await session.close()
 
     asyncio.run(_f())
+
+
+@asset(deps=[audio_files], partitions_def=weekly_partition)
+def transcripts(context: AssetExecutionContext):
+    partition_key = context.partition_key
+    audio_file_dir = Path(AUDIO_FILE_PARTITION_FILE_PATH_TEMPLATE.format(partition_key))
+    transcript_dir = Path(TRANSCRIPT_PARTITION_FILE_PATH_TEMPLATE.format(partition_key))
+    os.makedirs(transcript_dir, exist_ok=True)
+    model = whisper.load_model("base")
+
+    for mp3_filename in os.listdir(audio_file_dir):
+        mp3_path = audio_file_dir / mp3_filename
+        txt_filename = mp3_filename.replace(".mp3", ".txt")
+        txt_path = transcript_dir / txt_filename
+
+        if txt_path.exists():
+            print(f"{txt_path} already exists, skipping")
+        else:
+            result = model.transcribe(str(mp3_path))
+            with open(txt_path, "w") as f:
+                f.write(str(result["text"]))
 
 
 @asset(deps=[episode_metadata])

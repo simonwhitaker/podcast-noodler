@@ -1,3 +1,3 @@
-from dagster import MonthlyPartitionsDefinition
+from dagster import MonthlyPartitionsDefinition, WeeklyPartitionsDefinition
 
-monthly_partition = MonthlyPartitionsDefinition(start_date="2023-01-01", end_offset=1)
+weekly_partition = WeeklyPartitionsDefinition(start_date="2024-03-01")
