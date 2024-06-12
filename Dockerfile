@@ -40,14 +40,18 @@ COPY --from=build /venv /venv
 
 # Add our virtual environment to the path.
 ENV PATH=/venv/bin:$PATH \
+    DAGSTER_HOME='/opt/dagster/dagster_home' \
     PYTHONPATH='/venv'
 
-RUN mkdir -p /opt/dagster/dagster_home /opt/dagster/app
+RUN mkdir -p /opt/dagster/dagster_home /opt/dagster/app && \
+    apt-get update && \
+    apt-get install -y ffmpeg
 
 WORKDIR /opt/dagster/app
 
 # Copy your code and workspace to /opt/dagster/app
-COPY podcast_noodler workspace.yaml /opt/dagster/app/
+COPY workspace.yaml /opt/dagster/app/
+COPY podcast_noodler /opt/dagster/app/podcast_noodler
 
 # Copy dagster instance YAML to $DAGSTER_HOME
 # COPY dagster.yaml /opt/dagster/dagster_home/

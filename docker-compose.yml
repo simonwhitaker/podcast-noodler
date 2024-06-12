@@ -1,0 +1,17 @@
+version: "3"
+services:
+  app:
+    build: .
+    ports:
+      - 3000:3000
+    volumes:
+      - dagster_home:/opt/dagster/dagster_home
+      - data:/opt/dagster/data
+    env_file:
+      - .env
+    environment:
+      - DATA_DIR=/opt/dagster/data
+
+volumes:
+  data:
+  dagster_home:
