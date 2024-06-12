@@ -7,6 +7,7 @@ import aiohttp
 import feedparser
 import whisper
 from dagster import AssetExecutionContext, MaterializeResult, asset
+from dagster_openai import OpenAIResource
 
 from podcast_noodler.utils import download_file
 
@@ -15,6 +16,7 @@ from ..utils import sluggify
 from .constants import (
     AUDIO_FILE_PARTITION_FILE_PATH_TEMPLATE,
     EPISODES_METADATA_FILE_PATH,
+    SUMMARIES_PARTITION_FILE_PATH_TEMPLATE,
     TRANSCRIPT_PARTITION_FILE_PATH_TEMPLATE,
 )
 
@@ -120,3 +122,36 @@ def transcripts(context: AssetExecutionContext):
             result = model.transcribe(str(mp3_path))
             with open(txt_path, "w") as f:
                 f.write(str(result["text"]))
+
+
+@asset(deps=[transcripts], partitions_def=weekly_partition, compute_kind="OpenAI")
+def summaries(context: AssetExecutionContext, openai: OpenAIResource):
+    partition_key = context.partition_key
+    transcript_dir = Path(TRANSCRIPT_PARTITION_FILE_PATH_TEMPLATE.format(partition_key))
+    summary_dir = Path(SUMMARIES_PARTITION_FILE_PATH_TEMPLATE.format(partition_key))
+    summary_dir.mkdir(parents=True, exist_ok=True)
+
+    for transcript_path in transcript_dir.iterdir():
+        summary_path = summary_dir / transcript_path.name
+        if summary_path.exists():
+            print(f"Already got a summary for {summary_path.name}, skipping")
+            continue
+
+        transcript = transcript_path.read_text()
+        with openai.get_client(context) as client:
+            resp = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": f"Summarize the following podcast transcript: {transcript}",
+                    }
+                ],
+            )
+            first_choice = resp.choices[0]
+            summary = first_choice.message.content
+            if summary:
+                with summary_path.open("w") as f:
+                    f.write(summary)
+            else:
+                print(f"Summary was None for {transcript_path.name}")
