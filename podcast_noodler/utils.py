@@ -21,7 +21,6 @@ async def download_file(
                     return
             except FileNotFoundError:
                 pass
-            print(f"Downloading {url} to {local_path}")
             with open(local_path, "wb") as f:
                 async for chunk in resp.content.iter_chunked(1024):
                     f.write(chunk)
