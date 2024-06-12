@@ -18,7 +18,7 @@ lemmatizer = WordNetLemmatizer()
 @asset(deps=["episode_metadata"])
 def most_frequent_summary_words() -> MaterializeResult:
     """
-    Determines the most commonly-occurring words in the summaries of all the
+    The most commonly-occurring words in the summaries of all the
     episodes in the feed, excluding stopwords.
     """
     episodes = pd.read_json(EPISODES_METADATA_FILE_PATH)
@@ -54,6 +54,9 @@ def most_frequent_summary_words() -> MaterializeResult:
 
 @asset(deps=["episode_metadata"])
 def most_frequent_tags() -> MaterializeResult:
+    """
+    The most frequent tags in the episode metadata
+    """
     tag_counts = {}
     with open(EPISODES_METADATA_FILE_PATH) as f:
         episodes = json.load(f)
