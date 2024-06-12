@@ -503,13 +503,13 @@ files = [
 
 [[package]]
 name = "dagster"
-version = "1.7.3"
+version = "1.7.9"
 description = "Dagster is an orchestration platform for the development, production, and observation of data assets."
 optional = false
 python-versions = "<3.13,>=3.8"
 files = [
-    {file = "dagster-1.7.3-py3-none-any.whl", hash = "sha256:c316df55a8160b60e091cdc2ec0c96d800020afeb5858edad1e22d912adea20e"},
-    {file = "dagster-1.7.3.tar.gz", hash = "sha256:03e4899064d3d0aac782b7d92b8cfe0c718c1da4cd5a40898134747f880c27fd"},
+    {file = "dagster-1.7.9-py3-none-any.whl", hash = "sha256:4c4541cebec5084e44dd5a85ab2f2e38407e18e1efcf82c3f4f2dc3c41501155"},
+    {file = "dagster-1.7.9.tar.gz", hash = "sha256:91be5523d9721fc0ff27ef49f9d392f12966f787c6208a5fa3ceb3142cc4493c"},
 ]
 
 [package.dependencies]
@@ -517,8 +517,9 @@ alembic = ">=1.2.1,<1.6.3 || >1.6.3,<1.7.0 || >1.7.0,<1.11.0 || >1.11.0"
 click = ">=5.0"
 coloredlogs = ">=6.1,<=14.0"
 croniter = ">=0.3.34"
-dagster-pipes = "1.7.3"
+dagster-pipes = "1.7.9"
 docstring-parser = "*"
+filelock = "*"
 grpcio = ">=1.44.0"
 grpcio-health-checking = ">=1.44.0"
 Jinja2 = "*"
@@ -549,59 +550,85 @@ watchdog = ">=0.8.3"
 docker = ["docker"]
 mypy = ["mypy (==1.8.0)"]
 pyright = ["pandas-stubs", "pyright (==1.1.356)", "types-PyYAML", "types-backports", "types-certifi", "types-chardet", "types-croniter", "types-cryptography", "types-mock", "types-paramiko", "types-pkg-resources", "types-pyOpenSSL", "types-python-dateutil", "types-pytz", "types-requests", "types-simplejson", "types-six", "types-sqlalchemy (==1.4.53.34)", "types-tabulate", "types-toml", "types-tzlocal"]
-ruff = ["ruff (==0.3.4)"]
-test = ["buildkite-test-collector", "docker", "grpcio-tools (>=1.44.0)", "mock (==3.0.5)", "morefs[asynclocal]", "mypy-protobuf", "objgraph", "pytest (>=7.0.1)", "pytest-cov (==2.10.1)", "pytest-mock (==3.3.1)", "pytest-rerunfailures (==10.0)", "pytest-xdist (==3.5.0)", "rapidfuzz", "responses (<=0.23.1)", "syrupy (>=4.0.0)", "tox (==3.25.0)"]
+ruff = ["ruff (==0.4.5)"]
+test = ["buildkite-test-collector", "docker", "fsspec (<2024.5.0)", "grpcio-tools (>=1.44.0)", "mock (==3.0.5)", "morefs[asynclocal]", "mypy-protobuf", "objgraph", "pytest (>=7.0.1)", "pytest-cov (==2.10.1)", "pytest-mock (==3.3.1)", "pytest-rerunfailures (==10.0)", "pytest-xdist (==3.5.0)", "rapidfuzz", "responses (<=0.23.1)", "syrupy (>=4.0.0)", "tox (==3.25.0)"]
 
 [[package]]
 name = "dagster-graphql"
-version = "1.7.3"
+version = "1.7.9"
 description = "The GraphQL frontend to python dagster."
 optional = false
 python-versions = "<3.13,>=3.8"
 files = [
-    {file = "dagster-graphql-1.7.3.tar.gz", hash = "sha256:867c7945df49ad04101f8c8d025feaa1f28283ae27edc2760ee16fe5ddebe12f"},
-    {file = "dagster_graphql-1.7.3-py3-none-any.whl", hash = "sha256:6491583e8584df435ae1d204c3d34c9a5c80be16e6491217f31b9847ad4da4ae"},
+    {file = "dagster-graphql-1.7.9.tar.gz", hash = "sha256:ca2f37a9d801f25d59ff10e6f18f3d657a6f228797a9bc3f6be0a4cc8d174af3"},
+    {file = "dagster_graphql-1.7.9-py3-none-any.whl", hash = "sha256:99880e9a451e208ab6f180b5fdbdb5276e74f6c19100399411a1b9908b14aa13"},
 ]
 
 [package.dependencies]
-dagster = "1.7.3"
+dagster = "1.7.9"
 gql = {version = ">=3,<4", extras = ["requests"]}
 graphene = ">=3,<4"
 requests = "*"
 starlette = "*"
 
 [[package]]
+name = "dagster-openai"
+version = "0.23.9"
+description = "A Open AI client resource for interacting with Open AI API."
+optional = false
+python-versions = "*"
+files = [
+    {file = "dagster-openai-0.23.9.tar.gz", hash = "sha256:fa821e652ab86d395c68b63bbaa800910a9a294d5f02a9596f5e6c883494549a"},
+    {file = "dagster_openai-0.23.9-py3-none-any.whl", hash = "sha256:51c4207c450427d3dc266a8e93870d13622162c51398f836e73549b8f0c1dd3f"},
+]
+
+[package.dependencies]
+dagster = "1.7.9"
+openai = "*"
+
+[[package]]
 name = "dagster-pipes"
-version = "1.7.3"
+version = "1.7.9"
 description = "Toolkit for Dagster integrations with transform logic outside of Dagster"
 optional = false
 python-versions = "<3.13,>=3.8"
 files = [
-    {file = "dagster-pipes-1.7.3.tar.gz", hash = "sha256:9766d8739c086e617d3c7416cafc156339f30a5102ee5f01780ef1e9e81a4e0b"},
-    {file = "dagster_pipes-1.7.3-py3-none-any.whl", hash = "sha256:a157ca268c728c610551ddea2a7cfb0ef757e10d297cdfb404b58e38c1fe9c13"},
+    {file = "dagster-pipes-1.7.9.tar.gz", hash = "sha256:4d18fd71b065749d4ac3f20aa9ccba5fb0a54227f6c4eb0828a4ba00a182cf39"},
+    {file = "dagster_pipes-1.7.9-py3-none-any.whl", hash = "sha256:91abe159d6e233653009f3e54eb6a18ae76328c6b76b172234b310286f75cb99"},
 ]
 
 [[package]]
 name = "dagster-webserver"
-version = "1.7.3"
+version = "1.7.9"
 description = "Web UI for dagster."
 optional = false
 python-versions = "<3.13,>=3.8"
 files = [
-    {file = "dagster-webserver-1.7.3.tar.gz", hash = "sha256:413b866ab76be1287c0b4383a46c2332586ff16cad03e4870c22ce7a33db9c4a"},
-    {file = "dagster_webserver-1.7.3-py3-none-any.whl", hash = "sha256:4a5dc614e1b28e586fb2f2410396ecbaa3941d7768f668156d5adfed45c87d09"},
+    {file = "dagster-webserver-1.7.9.tar.gz", hash = "sha256:bc9a493bfc48b103bca32bb94258480de4e404ae36c93bb37d9901629ca24675"},
+    {file = "dagster_webserver-1.7.9-py3-none-any.whl", hash = "sha256:fc11480ec039746c59210bc9f466e41fb3462e04baef75fe7c7df23fdbc0309e"},
 ]
 
 [package.dependencies]
 click = ">=7.0,<9.0"
-dagster = "1.7.3"
-dagster-graphql = "1.7.3"
+dagster = "1.7.9"
+dagster-graphql = "1.7.9"
 starlette = "!=0.36.0"
 uvicorn = {version = "*", extras = ["standard"]}
 
 [package.extras]
 notebook = ["nbconvert"]
 test = ["starlette[full]"]
+
+[[package]]
+name = "distro"
+version = "1.9.0"
+description = "Distro - an OS platform information API"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "distro-1.9.0-py3-none-any.whl", hash = "sha256:7bffd925d65168f85027d8da9af6bddab658135b840670a223589bc0c8ef02b2"},
+    {file = "distro-1.9.0.tar.gz", hash = "sha256:2fa77c6fd8940f116ee1d6b94a2f90b13b5ea8d019b98bc8bafdcabcdd9bdbed"},
+]
 
 [[package]]
 name = "docstring-parser"
@@ -996,6 +1023,27 @@ files = [
 ]
 
 [[package]]
+name = "httpcore"
+version = "1.0.5"
+description = "A minimal low-level HTTP client."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "httpcore-1.0.5-py3-none-any.whl", hash = "sha256:421f18bac248b25d310f3cacd198d55b8e6125c107797b609ff9b7a6ba7991b5"},
+    {file = "httpcore-1.0.5.tar.gz", hash = "sha256:34a38e2f9291467ee3b44e89dd52615370e152954ba21721378a87b2960f7a61"},
+]
+
+[package.dependencies]
+certifi = "*"
+h11 = ">=0.13,<0.15"
+
+[package.extras]
+asyncio = ["anyio (>=4.0,<5.0)"]
+http2 = ["h2 (>=3,<5)"]
+socks = ["socksio (==1.*)"]
+trio = ["trio (>=0.22.0,<0.26.0)"]
+
+[[package]]
 name = "httptools"
 version = "0.6.1"
 description = "A collection of framework independent HTTP protocol utils."
@@ -1042,6 +1090,30 @@ files = [
 
 [package.extras]
 test = ["Cython (>=0.29.24,<0.30.0)"]
+
+[[package]]
+name = "httpx"
+version = "0.27.0"
+description = "The next generation HTTP client."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "httpx-0.27.0-py3-none-any.whl", hash = "sha256:71d5465162c13681bff01ad59b2cc68dd838ea1f10e51574bac27103f00c91a5"},
+    {file = "httpx-0.27.0.tar.gz", hash = "sha256:a0cb88a46f32dc874e04ee956e4c2764aba2aa228f650b06788ba6bda2962ab5"},
+]
+
+[package.dependencies]
+anyio = "*"
+certifi = "*"
+httpcore = "==1.*"
+idna = "*"
+sniffio = "*"
+
+[package.extras]
+brotli = ["brotli", "brotlicffi"]
+cli = ["click (==8.*)", "pygments (==2.*)", "rich (>=10,<14)"]
+http2 = ["h2 (>=3,<5)"]
+socks = ["socksio (==1.*)"]
 
 [[package]]
 name = "humanfriendly"
@@ -1685,6 +1757,29 @@ files = [
     {file = "nvidia_nvtx_cu12-12.1.105-py3-none-manylinux1_x86_64.whl", hash = "sha256:dc21cf308ca5691e7c04d962e213f8a4aa9bbfa23d95412f452254c2caeb09e5"},
     {file = "nvidia_nvtx_cu12-12.1.105-py3-none-win_amd64.whl", hash = "sha256:65f4d98982b31b60026e0e6de73fbdfc09d08a96f4656dd3665ca616a11e1e82"},
 ]
+
+[[package]]
+name = "openai"
+version = "1.33.0"
+description = "The official Python library for the openai API"
+optional = false
+python-versions = ">=3.7.1"
+files = [
+    {file = "openai-1.33.0-py3-none-any.whl", hash = "sha256:621163b56570897ab8389d187f686a53d4771fd6ce95d481c0a9611fe8bc4229"},
+    {file = "openai-1.33.0.tar.gz", hash = "sha256:1169211a7b326ecbc821cafb427c29bfd0871f9a3e0947dd9e51acb3b0f1df78"},
+]
+
+[package.dependencies]
+anyio = ">=3.5.0,<5"
+distro = ">=1.7.0,<2"
+httpx = ">=0.23.0,<1"
+pydantic = ">=1.9.0,<3"
+sniffio = "*"
+tqdm = ">4"
+typing-extensions = ">=4.7,<5"
+
+[package.extras]
+datalib = ["numpy (>=1)", "pandas (>=1.2.3)", "pandas-stubs (>=1.1.0.11)"]
 
 [[package]]
 name = "openai-whisper"
@@ -3194,4 +3289,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11.0"
-content-hash = "beacb84df5805761af136020b39cc7f01584eba0d0e6dd746b0cc2e1f72f20d3"
+content-hash = "60b08f12f3bcd755f5b78395f64752383c01fd062a8456d211c2bc87ae38a8e1"
