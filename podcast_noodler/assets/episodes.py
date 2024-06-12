@@ -1,6 +1,5 @@
 import asyncio
 import json
-import os
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -25,11 +24,16 @@ def episode_metadata() -> MaterializeResult:
     """
     Get the RSS feed for the podcase and store info on available episodes
     """
+
+    # Get the feed and parse it
     feed_url = "https://www.theguardian.com/news/series/todayinfocus/podcast.xml"
     feed = feedparser.parse(feed_url)
     episodes = feed["entries"]
-    os.makedirs("data", exist_ok=True)
-    with open(EPISODES_METADATA_FILE_PATH, "w") as f:
+
+    # Store the feed in JSON format
+    metadata_path = Path(EPISODES_METADATA_FILE_PATH)
+    metadata_path.parent.mkdir(parents=True, exist_ok=True)
+    with metadata_path.open("w") as f:
         json.dump(episodes, f, indent=4)
 
     return MaterializeResult(
@@ -48,8 +52,8 @@ def audio_files(context: AssetExecutionContext) -> None:
 
     partition_key = context.partition_key  # YYYY-MM-DD
     partition_time_window = context.partition_time_window
-    partition_dir = AUDIO_FILE_PARTITION_FILE_PATH_TEMPLATE.format(partition_key)
-    os.makedirs(partition_dir, exist_ok=True)
+    partition_dir = Path(AUDIO_FILE_PARTITION_FILE_PATH_TEMPLATE.format(partition_key))
+    partition_dir.mkdir(parents=True, exist_ok=True)
 
     downloads = []
     with open(EPISODES_METADATA_FILE_PATH, "r") as f:
@@ -102,12 +106,12 @@ def transcripts(context: AssetExecutionContext):
     partition_key = context.partition_key
     audio_file_dir = Path(AUDIO_FILE_PARTITION_FILE_PATH_TEMPLATE.format(partition_key))
     transcript_dir = Path(TRANSCRIPT_PARTITION_FILE_PATH_TEMPLATE.format(partition_key))
-    os.makedirs(transcript_dir, exist_ok=True)
+
+    transcript_dir.mkdir(parents=True, exist_ok=True)
     model = whisper.load_model("base")
 
-    for mp3_filename in os.listdir(audio_file_dir):
-        mp3_path = audio_file_dir / mp3_filename
-        txt_filename = mp3_filename.replace(".mp3", ".txt")
+    for mp3_path in audio_file_dir.iterdir():
+        txt_filename = mp3_path.name.replace(".mp3", ".txt")
         txt_path = transcript_dir / txt_filename
 
         if txt_path.exists():
