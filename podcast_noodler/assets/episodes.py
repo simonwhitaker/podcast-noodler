@@ -6,7 +6,7 @@ from pathlib import Path
 import aiohttp
 import feedparser
 import whisper
-from dagster import AssetExecutionContext, MaterializeResult, asset
+from dagster import AssetExecutionContext, MaterializeResult, MetadataValue, asset
 from dagster_openai import OpenAIResource
 
 from podcast_noodler.utils import download_file
@@ -24,7 +24,7 @@ from .constants import (
 @asset
 def episode_metadata() -> MaterializeResult:
     """
-    Get the RSS feed for the podcase and store info on available episodes
+    The RSS feed for the podcast, stored in JSON format
     """
 
     # Get the feed and parse it
@@ -105,6 +105,9 @@ def audio_files(context: AssetExecutionContext) -> None:
 
 @asset(deps=[audio_files], partitions_def=weekly_partition)
 def transcripts(context: AssetExecutionContext):
+    """
+    The transcripts of the podcast episodes, generated with whisper
+    """
     partition_key = context.partition_key
     audio_file_dir = Path(AUDIO_FILE_PARTITION_FILE_PATH_TEMPLATE.format(partition_key))
     transcript_dir = Path(TRANSCRIPT_PARTITION_FILE_PATH_TEMPLATE.format(partition_key))
@@ -128,6 +131,9 @@ def transcripts(context: AssetExecutionContext):
 def summaries(
     context: AssetExecutionContext, openai: OpenAIResource
 ) -> MaterializeResult:
+    """
+    Podcast summaries, generated with OpenAI
+    """
     partition_key = context.partition_key
     transcript_dir = Path(TRANSCRIPT_PARTITION_FILE_PATH_TEMPLATE.format(partition_key))
     summary_dir = Path(SUMMARIES_PARTITION_FILE_PATH_TEMPLATE.format(partition_key))
@@ -163,4 +169,5 @@ def summaries(
                     print(f"Summary was None for {transcript_path.name}")
         summaries.append(summary)
 
-    return MaterializeResult(metadata={"summaries": summaries})
+    summaries_md = "\n".join([f"* {x}" for x in summaries])
+    return MaterializeResult(metadata={"summaries": MetadataValue.md(summaries_md)})
