@@ -143,9 +143,13 @@ def summaries(context: AssetExecutionContext, openai: OpenAIResource):
                 model="gpt-3.5-turbo",
                 messages=[
                     {
+                        "role": "system",
+                        "content": "You will be given the transcript of a podcast episode. Summarise the episode's content in no more than three sentences.",
+                    },
+                    {
                         "role": "user",
-                        "content": f"Summarize the following podcast transcript: {transcript}",
-                    }
+                        "content": transcript,
+                    },
                 ],
             )
             first_choice = resp.choices[0]
