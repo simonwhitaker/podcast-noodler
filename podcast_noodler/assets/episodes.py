@@ -125,37 +125,42 @@ def transcripts(context: AssetExecutionContext):
 
 
 @asset(deps=[transcripts], partitions_def=weekly_partition, compute_kind="OpenAI")
-def summaries(context: AssetExecutionContext, openai: OpenAIResource):
+def summaries(
+    context: AssetExecutionContext, openai: OpenAIResource
+) -> MaterializeResult:
     partition_key = context.partition_key
     transcript_dir = Path(TRANSCRIPT_PARTITION_FILE_PATH_TEMPLATE.format(partition_key))
     summary_dir = Path(SUMMARIES_PARTITION_FILE_PATH_TEMPLATE.format(partition_key))
     summary_dir.mkdir(parents=True, exist_ok=True)
+    summaries = []
 
     for transcript_path in transcript_dir.iterdir():
         summary_path = summary_dir / transcript_path.name
         if summary_path.exists():
-            print(f"Already got a summary for {summary_path.name}, skipping")
-            continue
+            summary = summary_path.read_text()
+        else:
+            transcript = transcript_path.read_text()
+            with openai.get_client(context) as client:
+                resp = client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You will be given the transcript of a podcast episode. Summarise the episode's content in no more than three sentences.",
+                        },
+                        {
+                            "role": "user",
+                            "content": transcript,
+                        },
+                    ],
+                )
+                first_choice = resp.choices[0]
+                summary = first_choice.message.content
+                if summary:
+                    with summary_path.open("w") as f:
+                        f.write(summary)
+                else:
+                    print(f"Summary was None for {transcript_path.name}")
+        summaries.append(summary)
 
-        transcript = transcript_path.read_text()
-        with openai.get_client(context) as client:
-            resp = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You will be given the transcript of a podcast episode. Summarise the episode's content in no more than three sentences.",
-                    },
-                    {
-                        "role": "user",
-                        "content": transcript,
-                    },
-                ],
-            )
-            first_choice = resp.choices[0]
-            summary = first_choice.message.content
-            if summary:
-                with summary_path.open("w") as f:
-                    f.write(summary)
-            else:
-                print(f"Summary was None for {transcript_path.name}")
+    return MaterializeResult(metadata={"summaries": summaries})
